@@ -46,6 +46,18 @@ class StableDiffusion {
         int sample_steps,
         float strength,
         int seed);
+    std::vector<uint8_t> txt2img_controlnet(
+        const std::vector<uint8_t>& init_img,
+        const std::vector<uint8_t>& control_img,
+        const std::string& prompt,
+        const std::string& negative_prompt,
+        float cfg_scale,
+        int width,
+        int height,
+        SampleMethod sample_method,
+        int sample_steps,
+        float strength,
+        int seed);
 };
 
 void set_sd_log_level(SDLogLevel level);

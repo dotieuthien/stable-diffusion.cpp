@@ -254,6 +254,7 @@ def convert(model_path, out_type = None, out_file=None):
         print("Convert done")
         print(f"Saved GGML compatible file to {out_file}")
 
+
 if __name__ == "__main__":
     import argparse
     parser = argparse.ArgumentParser(description="Convert Stable Diffuison model to GGML compatible file format")
