@@ -47,7 +47,6 @@ class StableDiffusion {
         float strength,
         int seed);
     std::vector<uint8_t> txt2img_controlnet(
-        const std::vector<uint8_t>& init_img,
         const std::vector<uint8_t>& control_img,
         const std::string& prompt,
         const std::string& negative_prompt,

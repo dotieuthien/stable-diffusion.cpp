@@ -70,6 +70,13 @@ std::string sd_get_system_info() {
     return ss.str();
 }
 
+/**
+ * @brief 
+ * 
+ * @param ctx
+ * @param file_path 
+ * @return ggml_tensor* return a ggml_tensor pointer
+ */
 ggml_tensor* load_tensor_from_file(ggml_context* ctx, const std::string& file_path) {
     std::ifstream file(file_path, std::ios::binary);
     if (!file.is_open()) {
@@ -109,9 +116,16 @@ void set_random_seed(int seed) {
     generator.seed(seed);
 }
 
+/**
+ * @brief 
+ * 
+ * @param tensor pointer to struct ggml_tensor
+ * we can use struct ggml_tensor* tensor or ggml_tensor* tensor
+ */
 void ggml_tensor_set_f32_randn(struct ggml_tensor* tensor) {
     float mean = 0.0;
     float stddev = 1.0;
+    // instance of class std::normal_distribution with specific mean and stddev
     std::normal_distribution<float> distribution(mean, stddev);
     for (int i = 0; i < ggml_nelements(tensor); i++) {
         float random_number = distribution(generator);
@@ -1436,6 +1450,269 @@ struct UpSample {
     }
 };
 
+// cldm.cldm.ControlNet
+struct ControlNet {
+    // network hparams
+    int in_channels;
+    int model_channels;
+    int hint_channels;
+    int num_res_blocks = 2; // number of residual blocks per downsample
+    int attention_resolutions[3] = {4, 2, 1};
+    int channel_mult[4] = {1, 2, 4, 8}; // channel multiplier for each level of the UNet
+    int time_embed_dim;
+    int num_heads;  // the number of attention heads in each attention layer
+    int num_head_channels;
+
+    // network params
+    struct ggml_tensor* time_embed_0_w;  // [time_embed_dim, model_channels]
+    struct ggml_tensor* time_embed_0_b;  // [time_embed_dim, ]
+    // time_embed_1 is nn.SILU()
+    struct ggml_tensor* time_embed_2_w;  // [time_embed_dim, time_embed_dim]
+    struct ggml_tensor* time_embed_2_b;  // [time_embed_dim, ]
+
+    struct ggml_tensor* input_block_0_w;  // [model_channels, in_channels, 3, 3]
+    struct ggml_tensor* input_block_0_b;  // [model_channels, ]
+
+    struct ggml_tensor* input_hint_block_0_w;
+    struct ggml_tensor* input_hint_block_0_b;
+
+    // input blocks
+    ResBlock input_res_blocks[4][2];
+    SpatialTransformer input_transformers[3][2];
+    DownSample input_down_samples[3];
+
+    // middle_block
+    ResBlock middle_block_0;
+    SpatialTransformer middle_block_1;
+    ResBlock middle_block_2;
+
+    ControlNet() {
+        // set up hparams of blocks
+
+        // input blocks
+        std::vector<int> input_block_chans;
+        // assign channels
+        input_block_chans.push_back(model_channels);
+        int ch = model_channels;
+        int ds = 1;
+
+        int len_mults = sizeof(channel_mult) / sizeof(int);
+        for (int i = 0; i < len_mults; i++) {
+            int mult = channel_mult[i];
+            // with each level of multiplier have num_res_blocks blocks
+            for (int j = 0; j < num_res_blocks; j++) {
+                input_res_blocks[i][j].channels = ch;
+                input_res_blocks[i][j].emb_channels = time_embed_dim;
+                input_res_blocks[i][j].out_channels = mult * model_channels;
+
+                ch = mult * model_channels;
+
+                if (ds == attention_resolutions[0] || ds == attention_resolutions[1] || ds == attention_resolutions[2]) {
+                    input_transformers[i][j].in_channels = ch;
+                    input_transformers[i][j].n_head = num_heads;
+                    input_transformers[i][j].d_head = ch / num_heads;
+                }
+                input_block_chans.push_back(ch);
+            }
+        }
+
+        // middle blocks
+        middle_block_0.channels = ch;
+        middle_block_0.emb_channels = time_embed_dim;
+        middle_block_0.out_channels = ch;
+
+        middle_block_1.in_channels = ch;
+        middle_block_1.n_head = num_heads;
+        middle_block_1.d_head = ch / num_heads;
+
+        middle_block_2.channels = ch;
+        middle_block_2.emb_channels = time_embed_dim;
+        middle_block_2.out_channels = ch;
+
+    }
+
+    size_t compute_params_mem_size(ggml_type wtype) {
+        double mem_size = 0;
+        mem_size += time_embed_dim * model_channels * ggml_type_sizef(wtype);
+        mem_size += time_embed_dim * ggml_type_sizef(GGML_TYPE_F32);
+        mem_size += time_embed_dim * time_embed_dim * ggml_type_sizef(wtype);
+        mem_size += time_embed_dim * ggml_type_sizef(GGML_TYPE_F32);
+
+        mem_size += model_channels * in_channels * 3 * 3 * ggml_type_sizef(GGML_TYPE_F16);  // input_block_0_w
+        mem_size += model_channels * ggml_type_sizef(GGML_TYPE_F32);                        // input_block_0_b
+
+        mem_size += model_channels * in_channels * 3 * 3 * ggml_type_sizef(GGML_TYPE_F16);  // input_hint_block_0_w
+        mem_size += model_channels * ggml_type_sizef(GGML_TYPE_F32);                        // input_hint_block_0_b
+    
+        mem_size += 6 * ggml_tensor_overhead();  // object overhead
+
+        // input blocks
+        int ds = 1;
+        int len_mults = sizeof(channel_mult) / sizeof(int);
+        for (int i = 0; i < len_mults; i++) {
+            for (int j = 0; j < num_res_blocks; j++) {
+                mem_size += input_res_blocks[i][j].compute_params_mem_size(wtype);
+                if (ds == attention_resolutions[0] || ds == attention_resolutions[1] || ds == attention_resolutions[2]) {
+                    mem_size += input_transformers[i][j].compute_params_mem_size(wtype);
+                }
+            }
+            if (i != len_mults - 1) {
+                ds *= 2;
+                mem_size += input_down_samples[i].compute_params_mem_size(wtype);
+            }
+        }
+
+        // middle_block
+        mem_size += middle_block_0.compute_params_mem_size(wtype);
+        mem_size += middle_block_1.compute_params_mem_size(wtype);
+        mem_size += middle_block_2.compute_params_mem_size(wtype);
+
+        return static_cast<size_t>(mem_size);
+    }
+
+    void init_params(struct ggml_context* ctx, ggml_type wtype) {
+        time_embed_0_w = ggml_new_tensor_2d(ctx, wtype, model_channels, time_embed_dim);
+        time_embed_0_b = ggml_new_tensor_1d(ctx, GGML_TYPE_F32, time_embed_dim);
+
+        time_embed_2_w = ggml_new_tensor_2d(ctx, wtype, time_embed_dim, time_embed_dim);
+        time_embed_2_b = ggml_new_tensor_1d(ctx, GGML_TYPE_F32, time_embed_dim);
+
+        // input_blocks
+        input_block_0_w = ggml_new_tensor_4d(ctx, GGML_TYPE_F16, 3, 3, in_channels, model_channels);
+        input_block_0_b = ggml_new_tensor_1d(ctx, GGML_TYPE_F32, model_channels);
+        int ds = 1;
+        int len_mults = sizeof(channel_mult) / sizeof(int);
+        for (int i = 0; i < len_mults; i++) {
+            for (int j = 0; j < num_res_blocks; j++) {
+                input_res_blocks[i][j].init_params(ctx, wtype);
+                if (ds == attention_resolutions[0] || ds == attention_resolutions[1] || ds == attention_resolutions[2]) {
+                    input_transformers[i][j].init_params(ctx, wtype);
+                }
+            }
+            if (i != len_mults - 1) {
+                input_down_samples[i].init_params(ctx, wtype);
+                ds *= 2;
+            }
+        }
+
+        // middle_blocks
+        middle_block_0.init_params(ctx, wtype);
+        middle_block_1.init_params(ctx, wtype);
+        middle_block_2.init_params(ctx, wtype);
+
+    }
+
+    /**
+     * @brief 
+     * 
+     * @param tensors address of a map
+     * map with key is string, and value is pointer of struct
+     * @param prefix 
+     */
+    void map_by_name(std::map<std::string, struct ggml_tensor*>& tensors, const std::string prefix) {
+        tensors[prefix + "time_embed.0.weight"] = time_embed_0_w;
+        tensors[prefix + "time_embed.0.bias"] = time_embed_0_b;
+
+        tensors[prefix + "time_embed.2.weight"] = time_embed_2_w;
+        tensors[prefix + "time_embed.2.bias"] = time_embed_2_b;
+
+        // input_blocks
+        tensors[prefix + "input_blocks.0.0.weight"] = input_block_0_w;
+        tensors[prefix + "input_blocks.0.0.bias"] = input_block_0_b;
+
+        int len_mults = sizeof(channel_mult) / sizeof(int);
+        int input_block_idx = 0;
+        int ds = 1;
+        for (int i = 0; i < len_mults; i++) {
+            for (int j = 0; j < num_res_blocks; j++) {
+                input_block_idx += 1;
+
+                input_res_blocks[i][j].map_by_name(tensors, prefix + "input_blocks." + std::to_string(input_block_idx) + ".0.");
+                if (ds == attention_resolutions[0] || ds == attention_resolutions[1] || ds == attention_resolutions[2]) {
+                    input_transformers[i][j].map_by_name(tensors, prefix + "input_blocks." + std::to_string(input_block_idx) + ".1.");
+                }
+            }
+            if (i != len_mults - 1) {
+                input_block_idx += 1;
+                input_down_samples[i].map_by_name(tensors, prefix + "input_blocks." + std::to_string(input_block_idx) + ".0.");
+                ds *= 2;
+            }
+        }
+
+        // middle_blocks
+        middle_block_0.map_by_name(tensors, prefix + "middle_block.0.");
+        middle_block_1.map_by_name(tensors, prefix + "middle_block.1.");
+        middle_block_2.map_by_name(tensors, prefix + "middle_block.2.");
+    }
+    
+    /**
+     * @brief 
+     * 
+     * @param ctx 
+     * @param x: [N, in_channels, h, w]
+     * @param hint: []
+     * @param timesteps: [N, ]
+     * @param context: [N, max_position, hidden_size]([N, 77, 768])
+     * @param t_emb: [N, model_channels]
+     * @return struct ggml_tensor* 
+     */
+    struct ggml_tensor* forward(struct ggml_context* ctx,
+                                struct ggml_tensor* x,
+                                struct ggml_tensor* hint,
+                                struct ggml_tensor* timesteps,
+                                struct ggml_tensor* context,
+                                struct ggml_tensor* t_emb = NULL) {
+        if (t_emb == NULL && timesteps != NULL) {
+            t_emb = new_timestep_embedding(ctx, timesteps, model_channels);  // [N, model_channels]
+        }
+
+        // time_embed
+        // auto keyword mean automatically define type of variable
+        auto emb = ggml_mul_mat(ctx, time_embed_0_w, t_emb);
+        emb = ggml_add(ctx, ggml_repeat(ctx, time_embed_0_b, emb), emb);
+        emb = ggml_silu_inplace(ctx, emb);
+        emb = ggml_mul_mat(ctx, time_embed_2_w, emb);
+        emb = ggml_add(ctx, ggml_repeat(ctx, time_embed_2_b, emb), emb);  // [N, time_embed_dim]
+
+        // hint
+
+        // input_blocks
+        std::vector<struct ggml_tensor*> hs;
+        // input block 0
+        auto h = ggml_conv_2d(ctx, input_block_0_w, x, 1, 1, 1, 1, 1, 1);  // [N, model_channels, h, w]
+        h = ggml_add(ctx,
+                     h,
+                     ggml_repeat(ctx,
+                                 ggml_reshape_4d(ctx, input_block_0_b, 1, 1, input_block_0_b->ne[0], 1),
+                                 h));  // [N, model_channels, h, w]
+        hs.push_back(h);
+        // input block 1-11
+        int len_mults = sizeof(channel_mult) / sizeof(int);
+        int ds = 1;
+        for (int i = 0; i < len_mults; i++) {
+            int mult = channel_mult[i];
+            for (int j = 0; j < num_res_blocks; j++) {
+                h = input_res_blocks[i][j].forward(ctx, h, emb);  // [N, mult*model_channels, h, w]
+                if (ds == attention_resolutions[0] || ds == attention_resolutions[1] || ds == attention_resolutions[2]) {
+                    h = input_transformers[i][j].forward(ctx, h, context);  // [N, mult*model_channels, h, w]
+                }
+                hs.push_back(h);
+            }
+            if (i != len_mults - 1) {
+                ds *= 2;
+                h = input_down_samples[i].forward(ctx, h);  // [N, mult*model_channels, h/(2^(i+1)), w/(2^(i+1))]
+                hs.push_back(h);
+            }
+        }
+        // [N, 4*model_channels, h/8, w/8]
+
+        // middle_block
+        h = middle_block_0.forward(ctx, h, emb);      // [N, 4*model_channels, h/8, w/8]
+        h = middle_block_1.forward(ctx, h, context);  // [N, 4*model_channels, h/8, w/8]
+        h = middle_block_2.forward(ctx, h, emb);      // [N, 4*model_channels, h/8, w/8]
+    }
+};
+
 // ldm.modules.diffusionmodules.openaimodel.UNetModel
 struct UNetModel {
     // network hparams
@@ -1444,7 +1721,7 @@ struct UNetModel {
     int out_channels = 4;
     int num_res_blocks = 2;
     int attention_resolutions[3] = {4, 2, 1};
-    int channel_mult[4] = {1, 2, 4, 4};
+    int channel_mult[4] = {1, 2, 4, 4}; // channel multiplier for each level of the UNet
     int time_embed_dim = 1280;  // model_channels*4
     int num_heads = 8;
     int num_head_channels = -1;  // channels // num_heads
@@ -2653,6 +2930,7 @@ class StableDiffusionGGML {
 
     FrozenCLIPEmbedderWithCustomWords cond_stage_model;
     UNetModel diffusion_model;
+    ControlNet controlnet;
     AutoEncoderKL first_stage_model;
 
     CompVisDenoiser denoiser;
@@ -3716,3 +3994,110 @@ std::vector<uint8_t> StableDiffusion::img2img(const std::vector<uint8_t>& init_i
 
     return result;
 }
+
+/**
+ * @brief 
+ * 
+ * @param control_img 
+ * @param prompt 
+ * @param negative_prompt 
+ * @param cfg_scale 
+ * @param width 
+ * @param height 
+ * @param sample_method 
+ * @param sample_steps 
+ * @param strength 
+ * @param seed 
+ * @return std::vector<uint8_t> 
+ */
+std::vector<uint8_t> StableDiffusion::txt2img_controlnet(const std::vector<uint8_t>& control_img,
+                                              const std::string& prompt,
+                                              const std::string& negative_prompt,
+                                              float cfg_scale,
+                                              int width,
+                                              int height,
+                                              SampleMethod sample_method,
+                                              int sample_steps,
+                                              float strength,
+                                              int seed) {
+    std::vector<uint8_t> result;
+    struct ggml_init_params params;
+    params.mem_size = static_cast<size_t>(10 * 1024) * 1024;  // 10M
+    params.mem_buffer = NULL;
+    params.no_alloc = false;
+    params.dynamic = false;
+    // can use ggml_context* ctx = ggml_init(params); to define struct pointer
+    struct ggml_context* ctx = ggml_init(params);
+    if (!ctx) {
+        LOG_ERROR("ggml_init() failed");
+        return result;
+    }
+
+    if (seed < 0) {
+        seed = (int)time(NULL);
+    }
+    set_random_seed(seed);
+
+    int64_t t0 = ggml_time_ms();
+    // sd is a pointer of StableDiffusionGGML class
+    // get condition
+    // assign pointer to pointer
+    ggml_tensor* c = sd->get_learned_condition(ctx, prompt);
+    // get uncondition
+    struct ggml_tensor* uc = NULL;
+    if (cfg_scale != 1.0) {
+        uc = sd->get_learned_condition(ctx, negative_prompt);
+    }
+    int64_t t1 = ggml_time_ms();
+    LOG_INFO("get_learned_condition completed, taking %.2fs", (t1 - t0) * 1.0f / 1000);
+
+    if (sd->free_params_immediately) {
+        sd->curr_params_mem_size -= ggml_used_mem(sd->clip_params_ctx);
+        ggml_free(sd->clip_params_ctx);
+        sd->clip_params_ctx = NULL;
+    }
+
+    int C = 4;
+    int W = width / 8;
+    int H = height / 8;
+    struct ggml_tensor* x_t = ggml_new_tensor_4d(ctx, GGML_TYPE_F32, W, H, C, 1);
+    ggml_tensor_set_f32_randn(x_t);
+
+    std::vector<float> sigmas = sd->denoiser.get_sigmas(sample_steps);
+
+    LOG_INFO("start sampling");
+    struct ggml_tensor* x_0 = sd->sample(ctx, x_t, c, uc, cfg_scale, sample_method, sigmas);
+    int64_t t2 = ggml_time_ms();
+    LOG_INFO("sampling completed, taking %.2fs", (t2 - t1) * 1.0f / 1000);
+
+    if (sd->free_params_immediately) {
+        sd->curr_params_mem_size -= ggml_used_mem(sd->unet_params_ctx);
+        ggml_free(sd->unet_params_ctx);
+        sd->unet_params_ctx = NULL;
+    }
+
+    struct ggml_tensor* img = sd->decode_first_stage(ctx, x_0);
+    if (img != NULL) {
+      result = ggml_to_image_vec(img);
+    }
+    int64_t t3 = ggml_time_ms();
+    LOG_INFO("decode_first_stage completed, taking %.2fs", (t3 - t2) * 1.0f / 1000);
+
+    if (sd->free_params_immediately) {
+        sd->curr_params_mem_size -= ggml_used_mem(sd->vae_params_ctx);
+        ggml_free(sd->vae_params_ctx);
+        sd->vae_params_ctx = NULL;
+    }
+
+    LOG_INFO(
+        "txt2img completed in %.2fs, use %.2fMB of memory: peak params memory %.2fMB, "
+        "peak runtime memory %.2fMB",
+        (t3 - t0) * 1.0f / 1000,
+        sd->max_mem_size * 1.0f / 1024 / 1024,
+        sd->max_params_mem_size * 1.0f / 1024 / 1024,
+        sd->max_rt_mem_size * 1.0f / 1024 / 1024);
+
+    ggml_free(ctx);
+    return result;
+}
+                                            
