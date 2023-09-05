@@ -174,7 +174,6 @@ def convert(model_path, out_type = None, out_file=None):
         alphas_cumprod = get_alpha_comprod()
         state_dict["alphas_cumprod"] = alphas_cumprod
 
-
     # output option
     if out_type == None:
         weight = state_dict["cond_stage_model.transformer.text_model.encoder.layers.0.self_attn.k_proj.weight"].numpy()
@@ -255,11 +254,95 @@ def convert(model_path, out_type = None, out_file=None):
         print(f"Saved GGML compatible file to {out_file}")
 
 
+def convert_controlnet(model_path, out_type = None, out_file=None):
+    # load model
+    state_dict = load_model_from_file(model_path)
+    alphas_cumprod = state_dict.get("alphas_cumprod")
+    if alphas_cumprod != None:
+        # print((np.abs(get_alpha_comprod().numpy() - alphas_cumprod.numpy()) < 0.000001).all())
+        pass
+    else:
+        print("no alphas_cumprod in file, generate new one")
+        alphas_cumprod = get_alpha_comprod()
+        state_dict["alphas_cumprod"] = alphas_cumprod
+
+    # output option
+    if out_type == None:
+        raise "Input out type"
+    if out_file == None:
+        out_file = os.path.splitext(os.path.basename(model_path))[0] + f"-ggml-model-{out_type}.bin"
+        out_file = os.path.join(os.getcwd(), out_file)
+    print(f"Saving GGML compatible file to {out_file}")
+
+    # convert and save
+    with open(out_file, "wb") as file:
+        # magic: ggml in hex
+        file.write(struct.pack("i", 0x67676D6C))
+        # out type
+        file.write(struct.pack("i", ggml_ftype_str_to_int[out_type]))
+        
+        # weights
+        for name in state_dict.keys():
+            if not isinstance(state_dict[name], torch.Tensor):
+                continue
+            if name in unused_tensors:
+                continue
+            data = state_dict[name].numpy()
+
+            n_dims = len(data.shape)
+            shape = data.shape
+            old_type = data.dtype
+
+            ttype = "f32"
+            if n_dims == 4:
+                data = data.astype(np.float16)
+                ttype = "f16"
+            elif n_dims == 2 and name[-7:] == ".weight":
+                if out_type == "f32":
+                    data = data.astype(np.float32)
+                elif out_type == "f16":
+                    data = data.astype(np.float16)
+                elif out_type == "q4_0":
+                    data = quantize_q4_0(data)
+                elif out_type == "q4_1":
+                    data = quantize_q4_1(data)
+                elif out_type == "q5_0":
+                    data = quantize_q5_0(data)
+                elif out_type == "q5_1":
+                    data = quantize_q5_1(data)
+                elif out_type == "q8_0":
+                    data = quantize_q8_0(data)
+                else:
+                    raise Exception("invalid out_type {}".format(out_type))
+                ttype = out_type
+            else:
+                data = data.astype(np.float32)
+                ttype = "f32"
+            
+            print("Processing tensor: {} with shape {}, {} -> {}".format(name, data.shape, old_type, ttype))
+
+            # header
+            name_bytes = name.encode("utf-8")
+            file.write(struct.pack("iii", n_dims, len(name_bytes), ggml_ttype_str_to_int[ttype]))
+            for i in range(n_dims):
+                file.write(struct.pack("i", shape[n_dims - 1 - i]))
+            file.write(name_bytes)
+            # data
+            data.tofile(file)
+        print("Convert done")
+        print(f"Saved GGML compatible file to {out_file}")
+
+
 if __name__ == "__main__":
     import argparse
     parser = argparse.ArgumentParser(description="Convert Stable Diffuison model to GGML compatible file format")
     parser.add_argument("--out_type", choices=["f32", "f16", "q4_0", "q4_1", "q5_0", "q5_1", "q8_0"], help="output format (default: based on input)")
     parser.add_argument("--out_file", help="path to write to; default: based on input and current working directory")
-    parser.add_argument("model_path", help="model file path (*.pth, *.pt, *.ckpt, *.safetensors)")
+    parser.add_argument("--model_path", help="model file path (*.pth, *.pt, *.ckpt, *.safetensors)")
+    parser.add_argument("--controlnet", action='store_true')
     args = parser.parse_args()
-    convert(args.model_path, args.out_type, args.out_file)
+
+    if args.controlnet:
+        convert_controlnet(args.model_path, args.out_type, args.out_file)
+    else:
+        convert(args.model_path, args.out_type, args.out_file)

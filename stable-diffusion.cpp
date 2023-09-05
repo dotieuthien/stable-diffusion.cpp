@@ -1450,18 +1450,268 @@ struct UpSample {
     }
 };
 
+struct ZeroConv {
+    // network hparams
+    int in_channels;
+    int out_channels;
+
+    // network params
+    struct ggml_tensor* zero_conv_0_w;
+    struct ggml_tensor* zero_conv_0_b;
+
+    struct ggml_tensor* zero_conv_1_w;
+    struct ggml_tensor* zero_conv_1_b;
+
+    struct ggml_tensor* zero_conv_2_w;
+    struct ggml_tensor* zero_conv_2_b;
+
+    struct ggml_tensor* zero_conv_3_w;
+    struct ggml_tensor* zero_conv_3_b;
+
+    struct ggml_tensor* zero_conv_4_w;
+    struct ggml_tensor* zero_conv_4_b;
+
+    struct ggml_tensor* zero_conv_5_w;
+    struct ggml_tensor* zero_conv_5_b;
+
+    struct ggml_tensor* zero_conv_6_w;
+    struct ggml_tensor* zero_conv_6_b;
+
+    struct ggml_tensor* zero_conv_7_w;
+    struct ggml_tensor* zero_conv_7_b;
+
+    struct ggml_tensor* zero_conv_8_w;
+    struct ggml_tensor* zero_conv_8_b;
+
+    struct ggml_tensor* zero_conv_9_w;
+    struct ggml_tensor* zero_conv_9_b;
+
+    struct ggml_tensor* zero_conv_10_w;
+    struct ggml_tensor* zero_conv_10_b;
+
+    struct ggml_tensor* zero_conv_11_w;
+    struct ggml_tensor* zero_conv_11_b;
+
+    size_t compute_params_mem_size(ggml_type wtype) {
+        double mem_size = 0;
+    }
+
+    void init_params(struct ggml_context* ctx, ggml_type wtype) {
+
+    }
+
+    void map_by_name(std::map<std::string, struct ggml_tensor*>& tensors, const std::string prefix) {
+        tensors[prefix + "zero_convs.0.0.weight"] = zero_conv_0_w;
+        tensors[prefix + "zero_convs.0.0.bias"] = zero_conv_0_b;
+
+        tensors[prefix + "zero_convs.1.0.weight"] = zero_conv_1_w;
+        tensors[prefix + "zero_convs.1.0.bias"] = zero_conv_1_b;
+
+        tensors[prefix + "zero_convs.2.0.weight"] = zero_conv_2_w;
+        tensors[prefix + "zero_convs.2.0.bias"] = zero_conv_2_b;
+
+        tensors[prefix + "zero_convs.3.0.weight"] = zero_conv_3_w;
+        tensors[prefix + "zero_convs.3.0.bias"] = zero_conv_3_b;
+        
+        tensors[prefix + "zero_convs.4.0.weight"] = zero_conv_4_w;
+        tensors[prefix + "zero_convs.4.0.bias"] = zero_conv_4_b;
+
+        tensors[prefix + "zero_convs.5.0.weight"] = zero_conv_5_w;
+        tensors[prefix + "zero_convs.5.0.bias"] = zero_conv_5_b;
+
+        tensors[prefix + "zero_convs.6.0.weight"] = zero_conv_6_w;
+        tensors[prefix + "zero_convs.6.0.bias"] = zero_conv_6_b;
+
+        tensors[prefix + "zero_convs.7.0.weight"] = zero_conv_7_w;
+        tensors[prefix + "zero_convs.7.0.bias"] = zero_conv_7_b;
+
+        tensors[prefix + "zero_convs.8.0.weight"] = zero_conv_8_w;
+        tensors[prefix + "zero_convs.8.0.bias"] = zero_conv_8_b;
+
+        tensors[prefix + "zero_convs.9.0.weight"] = zero_conv_9_w;
+        tensors[prefix + "zero_convs.9.0.bias"] = zero_conv_9_b;
+
+        tensors[prefix + "zero_convs.10.0.weight"] = zero_conv_10_w;
+        tensors[prefix + "zero_convs.10.0.bias"] = zero_conv_10_b;
+
+        tensors[prefix + "zero_convs.11.0.weight"] = zero_conv_11_w;
+        tensors[prefix + "zero_convs.11.0.bias"] = zero_conv_11_b;
+    }
+
+    struct ggml_tensor* forward(struct ggml_context* ctx,
+                                struct ggml_tensor* h) {
+        return h;
+    }
+    
+};
+
+struct InputHintBlock {
+    // network hparams
+    int in_channels;
+    int out_channels;
+
+    // network params
+    struct ggml_tensor* input_hint_block_0_w;
+    struct ggml_tensor* input_hint_block_0_b;
+
+    struct ggml_tensor* input_hint_block_2_w;
+    struct ggml_tensor* input_hint_block_2_b;
+
+    struct ggml_tensor* input_hint_block_4_w;
+    struct ggml_tensor* input_hint_block_4_b;
+
+    struct ggml_tensor* input_hint_block_6_w;
+    struct ggml_tensor* input_hint_block_6_b;
+
+    struct ggml_tensor* input_hint_block_8_w;
+    struct ggml_tensor* input_hint_block_8_b;
+
+    struct ggml_tensor* input_hint_block_10_w;
+    struct ggml_tensor* input_hint_block_10_b;
+
+    struct ggml_tensor* input_hint_block_12_w;
+    struct ggml_tensor* input_hint_block_12_b;
+
+    struct ggml_tensor* input_hint_block_14_w;
+    struct ggml_tensor* input_hint_block_14_b;
+
+    // zero block
+    ZeroConv zero_block;
+
+    size_t compute_params_mem_size(ggml_type wtype) {
+        double mem_size = 0;
+    }
+
+    void init_params(struct ggml_context* ctx, ggml_type wtype) {
+
+    }
+
+    void map_by_name(std::map<std::string, struct ggml_tensor*>& tensors, const std::string prefix) {
+        tensors[prefix + "input_hint_block.0.weight"] = input_hint_block_0_w;
+        tensors[prefix + "input_hint_block.0.bias"] = input_hint_block_0_b;
+
+        tensors[prefix + "input_hint_block.2.weight"] = input_hint_block_2_w;
+        tensors[prefix + "input_hint_block.2.bias"] = input_hint_block_2_b;
+
+        tensors[prefix + "input_hint_block.4.weight"] = input_hint_block_4_w;
+        tensors[prefix + "input_hint_block.4.bias"] = input_hint_block_4_b;
+
+        tensors[prefix + "input_hint_block.6.weight"] = input_hint_block_6_w;
+        tensors[prefix + "input_hint_block.6.bias"] = input_hint_block_6_b;
+
+        tensors[prefix + "input_hint_block.8.weight"] = input_hint_block_8_w;
+        tensors[prefix + "input_hint_block.8.bias"] = input_hint_block_8_b;
+
+        tensors[prefix + "input_hint_block.10.weight"] = input_hint_block_10_w;
+        tensors[prefix + "input_hint_block.10.bias"] = input_hint_block_10_b;
+
+        tensors[prefix + "input_hint_block.12.weight"] = input_hint_block_12_w;
+        tensors[prefix + "input_hint_block.12.bias"] = input_hint_block_12_b;
+
+        tensors[prefix + "input_hint_block.14.weight"] = input_hint_block_14_w;
+        tensors[prefix + "input_hint_block.14.bias"] = input_hint_block_14_b;
+
+        // zero block
+        zero_block.map_by_name(tensors, prefix);
+    }
+
+    /**
+     * @brief 
+     * 
+     * @param ctx 
+     * @param hint 
+     * @param emb 
+     * @param context 
+     * @return struct ggml_tensor* 
+     */
+    struct ggml_tensor* forward(struct ggml_context* ctx, 
+                                struct ggml_tensor* hint, 
+                                struct ggml_tensor* emb,
+                                struct ggml_tensor* context) {
+        auto h = ggml_conv_2d(ctx, input_hint_block_0_w, hint, 1, 1, 1, 1, 1, 1);
+        h = ggml_add(ctx,
+                     h,
+                     ggml_repeat(ctx,
+                                 ggml_reshape_4d(ctx, input_hint_block_0_b, 1, 1, input_hint_block_0_b->ne[0], 1),
+                                 h));
+        h = ggml_silu_inplace(ctx, h);
+
+        h = ggml_conv_2d(ctx, input_hint_block_2_w, h, 1, 1, 1, 1, 1, 1);
+        h = ggml_add(ctx,
+                     h,
+                     ggml_repeat(ctx,
+                                 ggml_reshape_4d(ctx, input_hint_block_2_b, 1, 1, input_hint_block_2_b->ne[0], 1),
+                                 h));
+        h = ggml_silu_inplace(ctx, h);
+
+        h = ggml_conv_2d(ctx, input_hint_block_4_w, h, 1, 1, 1, 1, 1, 1);
+        h = ggml_add(ctx,
+                     h,
+                     ggml_repeat(ctx,
+                                 ggml_reshape_4d(ctx, input_hint_block_4_b, 1, 1, input_hint_block_4_b->ne[0], 1),
+                                 h));
+        h = ggml_silu_inplace(ctx, h);
+
+        h = ggml_conv_2d(ctx, input_hint_block_6_w, h, 1, 1, 1, 1, 1, 1);
+        h = ggml_add(ctx,
+                     h,
+                     ggml_repeat(ctx,
+                                 ggml_reshape_4d(ctx, input_hint_block_6_b, 1, 1, input_hint_block_6_b->ne[0], 1),
+                                 h));
+        h = ggml_silu_inplace(ctx, h);
+
+        h = ggml_conv_2d(ctx, input_hint_block_8_w, h, 1, 1, 1, 1, 1, 1);
+        h = ggml_add(ctx,
+                     h,
+                     ggml_repeat(ctx,
+                                 ggml_reshape_4d(ctx, input_hint_block_8_b, 1, 1, input_hint_block_8_b->ne[0], 1),
+                                 h));
+        h = ggml_silu_inplace(ctx, h);
+
+        h = ggml_conv_2d(ctx, input_hint_block_10_w, h, 1, 1, 1, 1, 1, 1);
+        h = ggml_add(ctx,
+                     h,
+                     ggml_repeat(ctx,
+                                 ggml_reshape_4d(ctx, input_hint_block_10_b, 1, 1, input_hint_block_10_b->ne[0], 1),
+                                 h));
+        h = ggml_silu_inplace(ctx, h);
+        
+        h = ggml_conv_2d(ctx, input_hint_block_12_w, h, 1, 1, 1, 1, 1, 1);
+        h = ggml_add(ctx,
+                     h,
+                     ggml_repeat(ctx,
+                                 ggml_reshape_4d(ctx, input_hint_block_12_b, 1, 1, input_hint_block_12_b->ne[0], 1),
+                                 h));
+        h = ggml_silu_inplace(ctx, h);
+
+        h = ggml_conv_2d(ctx, input_hint_block_14_w, h, 1, 1, 1, 1, 1, 1);
+        h = ggml_add(ctx,
+                     h,
+                     ggml_repeat(ctx,
+                                 ggml_reshape_4d(ctx, input_hint_block_14_b, 1, 1, input_hint_block_14_b->ne[0], 1),
+                                 h));
+        h = ggml_silu_inplace(ctx, h);
+
+        // zero block
+        h = zero_block.forward(ctx, h);
+
+        return h;
+    }
+};
+
 // cldm.cldm.ControlNet
 struct ControlNet {
     // network hparams
-    int in_channels;
-    int model_channels;
+    int in_channels = 4;
+    int model_channels = 320;
     int hint_channels;
+    int out_channels = 4;
     int num_res_blocks = 2; // number of residual blocks per downsample
     int attention_resolutions[3] = {4, 2, 1};
     int channel_mult[4] = {1, 2, 4, 8}; // channel multiplier for each level of the UNet
-    int time_embed_dim;
-    int num_heads;  // the number of attention heads in each attention layer
-    int num_head_channels;
+    int time_embed_dim = 1280;
+    int num_heads = 8;  // the number of attention heads in each attention layer
+    int num_head_channels = -1;
 
     // network params
     struct ggml_tensor* time_embed_0_w;  // [time_embed_dim, model_channels]
@@ -1473,13 +1723,12 @@ struct ControlNet {
     struct ggml_tensor* input_block_0_w;  // [model_channels, in_channels, 3, 3]
     struct ggml_tensor* input_block_0_b;  // [model_channels, ]
 
-    struct ggml_tensor* input_hint_block_0_w;
-    struct ggml_tensor* input_hint_block_0_b;
-
     // input blocks
     ResBlock input_res_blocks[4][2];
     SpatialTransformer input_transformers[3][2];
     DownSample input_down_samples[3];
+
+    // input hint block
 
     // middle_block
     ResBlock middle_block_0;
@@ -1540,9 +1789,6 @@ struct ControlNet {
 
         mem_size += model_channels * in_channels * 3 * 3 * ggml_type_sizef(GGML_TYPE_F16);  // input_block_0_w
         mem_size += model_channels * ggml_type_sizef(GGML_TYPE_F32);                        // input_block_0_b
-
-        mem_size += model_channels * in_channels * 3 * 3 * ggml_type_sizef(GGML_TYPE_F16);  // input_hint_block_0_w
-        mem_size += model_channels * ggml_type_sizef(GGML_TYPE_F32);                        // input_hint_block_0_b
     
         mem_size += 6 * ggml_tensor_overhead();  // object overhead
 
@@ -1561,6 +1807,8 @@ struct ControlNet {
                 mem_size += input_down_samples[i].compute_params_mem_size(wtype);
             }
         }
+
+        // input hint block
 
         // middle_block
         mem_size += middle_block_0.compute_params_mem_size(wtype);
@@ -1594,6 +1842,8 @@ struct ControlNet {
                 ds *= 2;
             }
         }
+
+        // input hint block
 
         // middle_blocks
         middle_block_0.init_params(ctx, wtype);
@@ -2916,6 +3166,7 @@ class StableDiffusionGGML {
     ggml_context* clip_params_ctx = NULL;
     ggml_context* unet_params_ctx = NULL;
     ggml_context* vae_params_ctx = NULL;
+    ggml_context* controlnet_params_ctx = NULL;
 
     bool dynamic = true;
     bool vae_decode_only = false;
@@ -2929,8 +3180,11 @@ class StableDiffusionGGML {
     size_t max_rt_mem_size = 0;
 
     FrozenCLIPEmbedderWithCustomWords cond_stage_model;
+    
     UNetModel diffusion_model;
+    
     ControlNet controlnet;
+
     AutoEncoderKL first_stage_model;
 
     CompVisDenoiser denoiser;
@@ -2946,6 +3200,7 @@ class StableDiffusionGGML {
         first_stage_model.decode_only = vae_decode_only;
     }
 
+    // destructor release (free) module's contex when end of the program
     ~StableDiffusionGGML() {
         if (clip_params_ctx != NULL) {
             ggml_free(clip_params_ctx);
@@ -2959,9 +3214,191 @@ class StableDiffusionGGML {
             ggml_free(vae_params_ctx);
             vae_params_ctx = NULL;
         }
+        if (controlnet_params_ctx != NULL) {
+            ggml_free(controlnet_params_ctx);
+            controlnet_params_ctx = NULL;
+        }
     }
 
-    bool load_from_file(const std::string& file_path) {
+    bool load_controlnet_from_file(const std::string& controlnet_path) {
+        LOG_INFO("loading controlnet from '%s'", controlnet_path.c_str());
+
+        std::ifstream controlnet_file(controlnet_path, std::ios::binary);
+        if (!controlnet_file.is_open()) {
+            LOG_ERROR("failed to open '%s'", controlnet_path.c_str());
+            return false;
+        }
+
+        LOG_DEBUG("verifying controlnet magic");
+        // verify magic
+        {
+            uint32_t magic;
+            controlnet_file.read(reinterpret_cast<char*>(&magic), sizeof(magic));
+            if (magic != GGML_FILE_MAGIC) {
+                LOG_ERROR("invalid model file '%s' (bad magic)", controlnet_path.c_str());
+                return false;
+            }
+        }
+
+        LOG_DEBUG("loading controlnet hparams");
+        // load hparams
+        controlnet_file.read(reinterpret_cast<char*>(&ftype), sizeof(ftype));
+        ggml_type wtype = ggml_ftype_to_ggml_type((ggml_ftype)(ftype));
+        LOG_INFO("ftype: %s", ggml_type_name(wtype));
+        if (wtype == GGML_TYPE_COUNT) {
+            LOG_ERROR("invalid model file '%s' (bad ftype value %d)", controlnet_path.c_str(), ftype);
+            return false;
+        }
+
+        {
+          // controlnet
+          double ctx_size = 1 * 1024 * 1024;  // 1 MB, for padding
+            ctx_size += controlnet.compute_params_mem_size(wtype);
+            LOG_DEBUG("unet params ctx size = % 6.2f MB", ctx_size / (1024.0 * 1024.0));
+
+            struct ggml_init_params params;
+            params.mem_size = static_cast<size_t>(ctx_size);
+            params.mem_buffer = NULL;
+            params.no_alloc = false;
+            params.dynamic = false;
+
+            controlnet_params_ctx = ggml_init(params);
+            if (!controlnet_params_ctx) {
+                LOG_ERROR("ggml_init() failed");
+                return false;
+            }
+        }
+
+        std::map<std::string, struct ggml_tensor*> tensors;
+
+        LOG_DEBUG("preparing memory for the weights");
+        // prepare memory for the controlnet weights
+        {
+            controlnet.init_params(controlnet_params_ctx, wtype);
+            controlnet.map_by_name(tensors, "control_model.");
+        }
+
+        LOG_DEBUG("loading weights");
+        std::set<std::string> tensor_names_in_file;
+        int64_t t0 = ggml_time_ms();
+        // load weights
+        {
+            int n_tensors = 0;
+            size_t total_size = 0;
+
+            while (true) {
+                int32_t n_dims;
+                int32_t length;
+                int32_t ttype;
+
+                // reinterpret_cast to convert type of pointer from int to char
+                controlnet_file.read(reinterpret_cast<char*>(&n_dims), sizeof(n_dims));
+                controlnet_file.read(reinterpret_cast<char*>(&length), sizeof(length));
+                controlnet_file.read(reinterpret_cast<char*>(&ttype), sizeof(ttype));
+
+                if (controlnet_file.eof()) {
+                    break;
+                }
+
+                int32_t nelements = 1;
+                int32_t ne[4] = {1, 1, 1, 1};
+                for (int i = 0; i < n_dims; ++i) {
+                    controlnet_file.read(reinterpret_cast<char*>(&ne[i]), sizeof(ne[i]));
+                    nelements *= ne[i];
+                }
+
+                std::string name(length, 0);
+                controlnet_file.read(&name[0], length);
+
+                tensor_names_in_file.insert(std::string(name.data()));
+
+                if (std::string(name.data()) == "alphas_cumprod") {
+                    controlnet_file.read(reinterpret_cast<char*>(denoiser.alphas_cumprod),
+                              nelements * ggml_type_size((ggml_type)ttype));
+                    for (int i = 0; i < 1000; i++) {
+                        denoiser.sigmas[i] = std::sqrt((1 - denoiser.alphas_cumprod[i]) / denoiser.alphas_cumprod[i]);
+                        denoiser.log_sigmas[i] = std::log(denoiser.sigmas[i]);
+                    }
+                    continue;
+                }
+
+                struct ggml_tensor* tensor;
+                if (tensors.find(name.data()) != tensors.end()) {
+                    tensor = tensors[name.data()];
+                } else {
+                    if (name.find("quant") == std::string::npos && name.find("first_stage_model.encoder.") == std::string::npos) {
+                        LOG_WARN("unknown tensor '%s' in model file", name.data());
+                    } else {
+                        if (!vae_decode_only) {
+                            LOG_WARN("unknown tensor '%s' in model file", name.data());
+                            return false;
+                        }
+                    }
+                    controlnet_file.ignore(nelements * ggml_type_size((ggml_type)ttype));
+                    continue;
+                }
+
+                if (tensor->ne[0] != ne[0] || tensor->ne[1] != ne[1] || tensor->ne[2] != ne[2] || tensor->ne[3] != ne[3]) {
+                    LOG_ERROR(
+                        "tensor '%s' has wrong shape in model file: "
+                        "got [%d, %d, %d, %d], expected [%d, %d, %d, %d]",
+                        name.data(),
+                        ne[0], ne[1], ne[2], ne[3],
+                        (int)tensor->ne[0], (int)tensor->ne[1], (int)tensor->ne[2], (int)tensor->ne[3]);
+                    return false;
+                }
+
+                if (ggml_nelements(tensor) != nelements) {
+                    LOG_ERROR(
+                        "tensor '%s' has wrong number of elements in model file: "
+                        "got %u, expert %zu",
+                        name.data(), nelements, ggml_nelements(tensor));
+                    return false;
+                }
+
+                if (tensor->type != ttype) {
+                    LOG_ERROR("tensor '%s' has wrong type in model file: got %s, expect %s",
+                              name.data(), ggml_type_name(ggml_type(ttype)), ggml_type_name(tensor->type));
+                    return false;
+                }
+
+                const size_t num_bytes = nelements / ggml_blck_size(ggml_type(ttype)) * ggml_type_size(ggml_type(ttype));
+
+                controlnet_file.read(reinterpret_cast<char*>(tensor->data), num_bytes);
+
+                total_size += ggml_nbytes(tensor);
+            }
+
+            bool some_tensor_not_init = false;
+            for (auto pair : tensors) {
+                if (tensor_names_in_file.find(pair.first) == tensor_names_in_file.end()) {
+                    LOG_ERROR("tensor '%s' not in model file", pair.first.c_str());
+                    some_tensor_not_init = true;
+                }
+            }
+            if (tensor_names_in_file.find("alphas_cumprod") == tensor_names_in_file.end()) {
+                LOG_ERROR("tensor alphas_cumprod not in model file");
+                some_tensor_not_init = true;
+            }
+            if (some_tensor_not_init) {
+                controlnet_file.close();
+                return false;
+            }
+            LOG_DEBUG("model size = %.2fMB", total_size / 1024.0 / 1024.0);
+        }
+        max_params_mem_size = ggml_used_mem(controlnet_params_ctx);
+        max_mem_size = max_params_mem_size;
+        curr_params_mem_size = max_params_mem_size;
+        LOG_INFO("total params size = %.2fMB (controlnet %.2fMB)",
+                 max_params_mem_size / 1024.0 / 1024.0,
+                 ggml_used_mem(controlnet_params_ctx) / 1024.0 / 1024.0);
+        int64_t t1 = ggml_time_ms();
+        LOG_INFO("loading controlnet from '%s' completed, taking %.2fs", controlnet_path.c_str(), (t1 - t0) * 1.0f / 1000);
+        controlnet_file.close();
+        return true;
+    }
+
+    bool load_from_file(const std::string& file_path, const std::string& controlnet_path) {
         LOG_INFO("loading model from '%s'", file_path.c_str());
 
         std::ifstream file(file_path, std::ios::binary);
@@ -3098,7 +3535,7 @@ class StableDiffusionGGML {
             diffusion_model.init_params(unet_params_ctx, wtype);
             diffusion_model.map_by_name(tensors, "model.diffusion_model.");
 
-            // firest_stage_model(AutoEncoderKL)
+            // first_stage_model(AutoEncoderKL)
             first_stage_model.init_params(vae_params_ctx, wtype);
             first_stage_model.map_by_name(tensors, "first_stage_model.");
         }
@@ -3220,6 +3657,11 @@ class StableDiffusionGGML {
         int64_t t1 = ggml_time_ms();
         LOG_INFO("loading model from '%s' completed, taking %.2fs", file_path.c_str(), (t1 - t0) * 1.0f / 1000);
         file.close();
+
+        // load controlnet
+        if (controlnet_path.length() != 0) {
+            load_controlnet_from_file(controlnet_path);
+        }
         return true;
     }
 
@@ -3794,7 +4236,7 @@ class StableDiffusionGGML {
 };
 
 /*================================================= StableDiffusion ==================================================*/
-
+// constructor
 StableDiffusion::StableDiffusion(int n_threads,
                                  bool vae_decode_only,
                                  bool free_params_immediately) {
@@ -3803,8 +4245,8 @@ StableDiffusion::StableDiffusion(int n_threads,
                                                free_params_immediately);
 }
 
-bool StableDiffusion::load_from_file(const std::string& file_path) {
-    return sd->load_from_file(file_path);
+bool StableDiffusion::load_from_file(const std::string& file_path, const std::string& controlnet_path) {
+    return sd->load_from_file(file_path, controlnet_path);
 }
 
 std::vector<uint8_t> StableDiffusion::txt2img(const std::string& prompt,

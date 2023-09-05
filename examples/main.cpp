@@ -71,8 +71,10 @@ struct Option {
     int n_threads = -1;
     std::string mode = TXT2IMG;
     std::string model_path;
+    std::string controlnet_path;
     std::string output_path = "output.png";
     std::string init_img;
+    std::string control_img;
     std::string prompt;
     std::string negative_prompt;
     float cfg_scale = 7.0f;
@@ -89,8 +91,10 @@ struct Option {
         printf("    n_threads:       %d\n", n_threads);
         printf("    mode:            %s\n", mode.c_str());
         printf("    model_path:      %s\n", model_path.c_str());
+        printf("    controlnet_path: %s\n", controlnet_path.c_str());
         printf("    output_path:     %s\n", output_path.c_str());
         printf("    init_img:        %s\n", init_img.c_str());
+        printf("    control_img:     %s\n", control_img.c_str());
         printf("    prompt:          %s\n", prompt.c_str());
         printf("    negative_prompt: %s\n", negative_prompt.c_str());
         printf("    cfg_scale:       %.2f\n", cfg_scale);
@@ -152,12 +156,24 @@ void parse_args(int argc, const char* argv[], Option* opt) {
                 break;
             }
             opt->model_path = argv[i];
+        } else if (arg == "-c" || arg == "--controlnet") {
+            if (++i >= argc) {
+                invalid_arg = true;
+                break;
+            }
+            opt->controlnet_path = argv[i];
         } else if (arg == "-i" || arg == "--init-img") {
             if (++i >= argc) {
                 invalid_arg = true;
                 break;
             }
             opt->init_img = argv[i];
+        } else if (arg == "-ci" || arg == "--control-img") {
+            if (++i >= argc) {
+                invalid_arg = true;
+                break;
+            }
+            opt->control_img = argv[i];
         } else if (arg == "-o" || arg == "--output") {
             if (++i >= argc) {
                 invalid_arg = true;
@@ -301,6 +317,7 @@ int main(int argc, const char* argv[]) {
 
     bool vae_decode_only = true;
     std::vector<uint8_t> init_img;
+    std::vector<uint8_t> control_img;
     if (opt.mode == IMG2IMG) {
         vae_decode_only = false;
 
@@ -328,8 +345,24 @@ int main(int argc, const char* argv[]) {
         init_img.assign(img_data, img_data + (opt.w * opt.h * c));
     }
 
+    if (opt.controlnet_path.length() != 0) {
+        // check control img
+        int controlnet_c = 0;
+        unsigned char* control_img_data = stbi_load(opt.control_img.c_str(), &opt.w, &opt.h, &controlnet_c, 3);
+        if (control_img_data == NULL) {
+            fprintf(stderr, "load image from '%s' failed\n", opt.control_img.c_str());
+            return 1;
+        }
+        if (controlnet_c != 3) {
+            fprintf(stderr, "control image must be a 3 channels RGB image, but got %d channels\n", controlnet_c);
+            free(control_img_data);
+            return 1;
+        }
+        control_img.assign(control_img_data, control_img_data + (opt.w * opt.h * controlnet_c));
+    }
+
     StableDiffusion sd(opt.n_threads, vae_decode_only, true);
-    if (!sd.load_from_file(opt.model_path)) {
+    if (!sd.load_from_file(opt.model_path, opt.controlnet_path)) {
         return 1;
     }
 
