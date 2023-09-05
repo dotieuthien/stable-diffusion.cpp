@@ -32,14 +32,31 @@ ggml_ttype_str_to_int = {
 QK4_0 = 32
 def quantize_q4_0(x):
     assert x.shape[-1] % QK4_0 == 0
+    print("origin shape ", x.shape)
     x = x.reshape(-1, QK4_0)
+    # get max of each slides in array
     max = np.take_along_axis(x, np.argmax(np.abs(x), axis=-1)[:, np.newaxis], axis=-1)
+    # float 32 from -xxx to xxx
+    # scale to 4 bit (-8 to 8)
+    # --> max float32 / max int4
     d = max / -8
+    # d is scale factor
+    # --> x / d is normalization from -8 to 8
+    # --> (x / d) + 8 mean shift to range [0, 15]
     qs = ((x / d) + 8).round().clip(min=0, max=15).astype(np.int8)
     half = QK4_0 // 2
+    # get half of precision 
+    print(bin(qs[:, half:][0][0]))
+    print(bin(qs[:, half:][0][0] << 4))
+    # bitwise OR
     qs = qs[:, :half] | (qs[:, half:] << 4)
+    print(bin(qs[0][0]))
+    print(d[0, :])
     d = d.astype(np.float16).view(np.int8)
+    print(d[0, :])
     y = np.concatenate((d, qs), axis=-1)
+    print(d.shape, qs.shape)
+    print(y.shape)
     return y
 
 QK4_1 = 32
@@ -239,8 +256,8 @@ def convert(model_path, out_type = None, out_file=None):
             else:
                 data = data.astype(np.float32)
                 ttype = "f32"
-            
-            print("Processing tensor: {} with shape {}, {} -> {}".format(name, data.shape, old_type, ttype))
+            if "model.diffusion_model.input_blocks" in name:
+                print("Processing tensor: {} with shape {}, {} -> {}".format(name, data.shape, old_type, ttype))
 
             # header
             name_bytes = name.encode("utf-8")

@@ -28,6 +28,8 @@
 
 #define TXT2IMG "txt2img"
 #define IMG2IMG "img2img"
+#define TXT2IMG_C "txt2img_controlnet"
+#define IMG2IMG_C "img2img_controlnet"
 
 // get_num_physical_cores is copy from
 // https://github.com/ggerganov/llama.cpp/blob/master/examples/common.cpp
@@ -249,7 +251,7 @@ void parse_args(int argc, const char* argv[], Option* opt) {
         opt->n_threads = get_num_physical_cores();
     }
 
-    if (opt->mode != TXT2IMG && opt->mode != IMG2IMG) {
+    if (opt->mode != TXT2IMG && opt->mode != IMG2IMG && opt->mode != TXT2IMG_C && opt->mode != IMG2IMG_C) {
         fprintf(stderr, "error: invalid mode %s, must be one of ['%s', '%s']\n",
                 opt->mode.c_str(), TXT2IMG, IMG2IMG);
         exit(1);
@@ -369,6 +371,17 @@ int main(int argc, const char* argv[]) {
     std::vector<uint8_t> img;
     if (opt.mode == TXT2IMG) {
         img = sd.txt2img(opt.prompt,
+                         opt.negative_prompt,
+                         opt.cfg_scale,
+                         opt.w,
+                         opt.h,
+                         opt.sample_method,
+                         opt.sample_steps,
+                         opt.seed);
+    } else if (opt.mode == TXT2IMG_C) {
+        img = sd.txt2img_controlnet(
+                         control_img,
+                         opt.prompt,
                          opt.negative_prompt,
                          opt.cfg_scale,
                          opt.w,

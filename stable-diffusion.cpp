@@ -1450,7 +1450,7 @@ struct UpSample {
     }
 };
 
-struct ZeroConv {
+struct ZeroConvs {
     // network hparams
     int in_channels;
     int out_channels;
@@ -1494,48 +1494,94 @@ struct ZeroConv {
 
     size_t compute_params_mem_size(ggml_type wtype) {
         double mem_size = 0;
+        mem_size += 4 * 320 * 320 * 1 * 1 * ggml_type_sizef(GGML_TYPE_F16);
+        mem_size += 4 * 320 * ggml_type_sizef(GGML_TYPE_F32);
+
+        mem_size += 3 * 640 * 640 * 1 * 1 * ggml_type_sizef(GGML_TYPE_F16);
+        mem_size += 3 * 640 * ggml_type_sizef(GGML_TYPE_F32);
+
+        mem_size += 5 * 1280 * 1280 * 1 * 1 * ggml_type_sizef(GGML_TYPE_F16);
+        mem_size += 5 * 1280 * ggml_type_sizef(GGML_TYPE_F32);
+
+        mem_size += 24 * ggml_tensor_overhead();  // object overhead
+
+        return static_cast<size_t>(mem_size);
     }
 
     void init_params(struct ggml_context* ctx, ggml_type wtype) {
+        zero_conv_0_w = ggml_new_tensor_4d(ctx, GGML_TYPE_F16, 1, 1, 320, 320);
+        zero_conv_0_b = ggml_new_tensor_1d(ctx, GGML_TYPE_F32, 320);
 
+        zero_conv_1_w = ggml_new_tensor_4d(ctx, GGML_TYPE_F16, 1, 1, 320, 320);
+        zero_conv_1_b = ggml_new_tensor_1d(ctx, GGML_TYPE_F32, 320);
+
+        zero_conv_2_w = ggml_new_tensor_4d(ctx, GGML_TYPE_F16, 1, 1, 320, 320);
+        zero_conv_2_b = ggml_new_tensor_1d(ctx, GGML_TYPE_F32, 320);
+
+        zero_conv_3_w = ggml_new_tensor_4d(ctx, GGML_TYPE_F16, 1, 1, 320, 320);
+        zero_conv_3_b = ggml_new_tensor_1d(ctx, GGML_TYPE_F32, 320);
+
+        zero_conv_4_w = ggml_new_tensor_4d(ctx, GGML_TYPE_F16, 1, 1, 640, 640);
+        zero_conv_4_b = ggml_new_tensor_1d(ctx, GGML_TYPE_F32, 640);
+
+        zero_conv_5_w = ggml_new_tensor_4d(ctx, GGML_TYPE_F16, 1, 1, 640, 640);
+        zero_conv_5_b = ggml_new_tensor_1d(ctx, GGML_TYPE_F32, 640);
+
+        zero_conv_6_w = ggml_new_tensor_4d(ctx, GGML_TYPE_F16, 1, 1, 640, 640);
+        zero_conv_6_b = ggml_new_tensor_1d(ctx, GGML_TYPE_F32, 640);
+
+        zero_conv_7_w = ggml_new_tensor_4d(ctx, GGML_TYPE_F16, 1, 1, 1280, 1280);
+        zero_conv_7_b = ggml_new_tensor_1d(ctx, GGML_TYPE_F32, 1280);
+
+        zero_conv_8_w = ggml_new_tensor_4d(ctx, GGML_TYPE_F16, 1, 1, 1280, 1280);
+        zero_conv_8_b = ggml_new_tensor_1d(ctx, GGML_TYPE_F32, 1280);
+
+        zero_conv_9_w = ggml_new_tensor_4d(ctx, GGML_TYPE_F16, 1, 1, 1280, 1280);
+        zero_conv_9_b = ggml_new_tensor_1d(ctx, GGML_TYPE_F32, 1280);
+
+        zero_conv_10_w = ggml_new_tensor_4d(ctx, GGML_TYPE_F16, 1, 1, 1280, 1280);
+        zero_conv_10_b = ggml_new_tensor_1d(ctx, GGML_TYPE_F32, 1280);
+
+        zero_conv_11_w = ggml_new_tensor_4d(ctx, GGML_TYPE_F16, 1, 1, 1280, 1280);
+        zero_conv_11_b = ggml_new_tensor_1d(ctx, GGML_TYPE_F32, 1280);
     }
 
     void map_by_name(std::map<std::string, struct ggml_tensor*>& tensors, const std::string prefix) {
-        tensors[prefix + "zero_convs.0.0.weight"] = zero_conv_0_w;
-        tensors[prefix + "zero_convs.0.0.bias"] = zero_conv_0_b;
+        tensors[prefix + "0.0.weight"] = zero_conv_0_w;
+        tensors[prefix + "0.0.bias"] = zero_conv_0_b;
 
-        tensors[prefix + "zero_convs.1.0.weight"] = zero_conv_1_w;
-        tensors[prefix + "zero_convs.1.0.bias"] = zero_conv_1_b;
+        tensors[prefix + "1.0.weight"] = zero_conv_1_w;
+        tensors[prefix + "1.0.bias"] = zero_conv_1_b;
 
-        tensors[prefix + "zero_convs.2.0.weight"] = zero_conv_2_w;
-        tensors[prefix + "zero_convs.2.0.bias"] = zero_conv_2_b;
+        tensors[prefix + "2.0.weight"] = zero_conv_2_w;
+        tensors[prefix + "2.0.bias"] = zero_conv_2_b;
 
-        tensors[prefix + "zero_convs.3.0.weight"] = zero_conv_3_w;
-        tensors[prefix + "zero_convs.3.0.bias"] = zero_conv_3_b;
+        tensors[prefix + "3.0.weight"] = zero_conv_3_w;
+        tensors[prefix + "3.0.bias"] = zero_conv_3_b;
         
-        tensors[prefix + "zero_convs.4.0.weight"] = zero_conv_4_w;
-        tensors[prefix + "zero_convs.4.0.bias"] = zero_conv_4_b;
+        tensors[prefix + "4.0.weight"] = zero_conv_4_w;
+        tensors[prefix + "4.0.bias"] = zero_conv_4_b;
 
-        tensors[prefix + "zero_convs.5.0.weight"] = zero_conv_5_w;
-        tensors[prefix + "zero_convs.5.0.bias"] = zero_conv_5_b;
+        tensors[prefix + "5.0.weight"] = zero_conv_5_w;
+        tensors[prefix + "5.0.bias"] = zero_conv_5_b;
 
-        tensors[prefix + "zero_convs.6.0.weight"] = zero_conv_6_w;
-        tensors[prefix + "zero_convs.6.0.bias"] = zero_conv_6_b;
+        tensors[prefix + "6.0.weight"] = zero_conv_6_w;
+        tensors[prefix + "6.0.bias"] = zero_conv_6_b;
 
-        tensors[prefix + "zero_convs.7.0.weight"] = zero_conv_7_w;
-        tensors[prefix + "zero_convs.7.0.bias"] = zero_conv_7_b;
+        tensors[prefix + "7.0.weight"] = zero_conv_7_w;
+        tensors[prefix + "7.0.bias"] = zero_conv_7_b;
 
-        tensors[prefix + "zero_convs.8.0.weight"] = zero_conv_8_w;
-        tensors[prefix + "zero_convs.8.0.bias"] = zero_conv_8_b;
+        tensors[prefix + "8.0.weight"] = zero_conv_8_w;
+        tensors[prefix + "8.0.bias"] = zero_conv_8_b;
 
-        tensors[prefix + "zero_convs.9.0.weight"] = zero_conv_9_w;
-        tensors[prefix + "zero_convs.9.0.bias"] = zero_conv_9_b;
+        tensors[prefix + "9.0.weight"] = zero_conv_9_w;
+        tensors[prefix + "9.0.bias"] = zero_conv_9_b;
 
-        tensors[prefix + "zero_convs.10.0.weight"] = zero_conv_10_w;
-        tensors[prefix + "zero_convs.10.0.bias"] = zero_conv_10_b;
+        tensors[prefix + "10.0.weight"] = zero_conv_10_w;
+        tensors[prefix + "10.0.bias"] = zero_conv_10_b;
 
-        tensors[prefix + "zero_convs.11.0.weight"] = zero_conv_11_w;
-        tensors[prefix + "zero_convs.11.0.bias"] = zero_conv_11_b;
+        tensors[prefix + "11.0.weight"] = zero_conv_11_w;
+        tensors[prefix + "11.0.bias"] = zero_conv_11_b;
     }
 
     struct ggml_tensor* forward(struct ggml_context* ctx,
@@ -1575,44 +1621,87 @@ struct InputHintBlock {
     struct ggml_tensor* input_hint_block_14_w;
     struct ggml_tensor* input_hint_block_14_b;
 
-    // zero block
-    ZeroConv zero_block;
-
     size_t compute_params_mem_size(ggml_type wtype) {
         double mem_size = 0;
+        mem_size += 16 * 3 * 3 * 3 * ggml_type_sizef(GGML_TYPE_F16);
+        mem_size += 3 * ggml_type_sizef(GGML_TYPE_F32); 
+
+        mem_size += 16 * 16 * 3 * 3 * ggml_type_sizef(GGML_TYPE_F16);
+        mem_size += 16 * ggml_type_sizef(GGML_TYPE_F32); 
+
+        mem_size += 32 * 16 * 3 * 3 * ggml_type_sizef(GGML_TYPE_F16);
+        mem_size += 32 * ggml_type_sizef(GGML_TYPE_F32); 
+
+        mem_size += 32 * 32 * 3 * 3 * ggml_type_sizef(GGML_TYPE_F16);
+        mem_size += 32 * ggml_type_sizef(GGML_TYPE_F32); 
+
+        mem_size += 96 * 32 * 3 * 3 * ggml_type_sizef(GGML_TYPE_F16);
+        mem_size += 96 * ggml_type_sizef(GGML_TYPE_F32); 
+
+        mem_size += 96 * 96 * 3 * 3 * ggml_type_sizef(GGML_TYPE_F16);
+        mem_size += 96 * ggml_type_sizef(GGML_TYPE_F32); 
+
+        mem_size += 256 * 96 * 3 * 3 * ggml_type_sizef(GGML_TYPE_F16);
+        mem_size += 256 * ggml_type_sizef(GGML_TYPE_F32); 
+
+        mem_size += 320 * 256 * 3 * 3 * ggml_type_sizef(GGML_TYPE_F16);
+        mem_size += 320 * ggml_type_sizef(GGML_TYPE_F32); 
+
+        mem_size += 16 * ggml_tensor_overhead();  // object overhead
+
+        return static_cast<size_t>(mem_size);
     }
 
     void init_params(struct ggml_context* ctx, ggml_type wtype) {
+        input_hint_block_0_w = ggml_new_tensor_4d(ctx, GGML_TYPE_F16, 3, 3, 3, 16);
+        input_hint_block_0_b = ggml_new_tensor_1d(ctx, GGML_TYPE_F32, 16);
 
+        input_hint_block_2_w = ggml_new_tensor_4d(ctx, GGML_TYPE_F16, 3, 3, 16, 16);
+        input_hint_block_2_b = ggml_new_tensor_1d(ctx, GGML_TYPE_F32, 16);
+
+        input_hint_block_4_w = ggml_new_tensor_4d(ctx, GGML_TYPE_F16, 3, 3, 16, 32);
+        input_hint_block_4_b = ggml_new_tensor_1d(ctx, GGML_TYPE_F32, 32);
+
+        input_hint_block_6_w = ggml_new_tensor_4d(ctx, GGML_TYPE_F16, 3, 3, 32, 32);
+        input_hint_block_6_b = ggml_new_tensor_1d(ctx, GGML_TYPE_F32, 32);
+
+        input_hint_block_8_w = ggml_new_tensor_4d(ctx, GGML_TYPE_F16, 3, 3, 32, 96);
+        input_hint_block_8_b = ggml_new_tensor_1d(ctx, GGML_TYPE_F32, 96);
+
+        input_hint_block_10_w = ggml_new_tensor_4d(ctx, GGML_TYPE_F16, 3, 3, 96, 96);
+        input_hint_block_10_b = ggml_new_tensor_1d(ctx, GGML_TYPE_F32, 96);
+
+        input_hint_block_12_w = ggml_new_tensor_4d(ctx, GGML_TYPE_F16, 3, 3, 96, 256);
+        input_hint_block_12_b = ggml_new_tensor_1d(ctx, GGML_TYPE_F32, 256);
+
+        input_hint_block_14_w = ggml_new_tensor_4d(ctx, GGML_TYPE_F16, 3, 3, 256, 320);
+        input_hint_block_14_b = ggml_new_tensor_1d(ctx, GGML_TYPE_F32, 320);
     }
 
     void map_by_name(std::map<std::string, struct ggml_tensor*>& tensors, const std::string prefix) {
-        tensors[prefix + "input_hint_block.0.weight"] = input_hint_block_0_w;
-        tensors[prefix + "input_hint_block.0.bias"] = input_hint_block_0_b;
+        tensors[prefix + "0.weight"] = input_hint_block_0_w;
+        tensors[prefix + "0.bias"] = input_hint_block_0_b;
 
-        tensors[prefix + "input_hint_block.2.weight"] = input_hint_block_2_w;
-        tensors[prefix + "input_hint_block.2.bias"] = input_hint_block_2_b;
+        tensors[prefix + "2.weight"] = input_hint_block_2_w;
+        tensors[prefix + "2.bias"] = input_hint_block_2_b;
 
-        tensors[prefix + "input_hint_block.4.weight"] = input_hint_block_4_w;
-        tensors[prefix + "input_hint_block.4.bias"] = input_hint_block_4_b;
+        tensors[prefix + "4.weight"] = input_hint_block_4_w;
+        tensors[prefix + "4.bias"] = input_hint_block_4_b;
 
-        tensors[prefix + "input_hint_block.6.weight"] = input_hint_block_6_w;
-        tensors[prefix + "input_hint_block.6.bias"] = input_hint_block_6_b;
+        tensors[prefix + "6.weight"] = input_hint_block_6_w;
+        tensors[prefix + "6.bias"] = input_hint_block_6_b;
 
-        tensors[prefix + "input_hint_block.8.weight"] = input_hint_block_8_w;
-        tensors[prefix + "input_hint_block.8.bias"] = input_hint_block_8_b;
+        tensors[prefix + "8.weight"] = input_hint_block_8_w;
+        tensors[prefix + "8.bias"] = input_hint_block_8_b;
 
-        tensors[prefix + "input_hint_block.10.weight"] = input_hint_block_10_w;
-        tensors[prefix + "input_hint_block.10.bias"] = input_hint_block_10_b;
+        tensors[prefix + "10.weight"] = input_hint_block_10_w;
+        tensors[prefix + "10.bias"] = input_hint_block_10_b;
 
-        tensors[prefix + "input_hint_block.12.weight"] = input_hint_block_12_w;
-        tensors[prefix + "input_hint_block.12.bias"] = input_hint_block_12_b;
+        tensors[prefix + "12.weight"] = input_hint_block_12_w;
+        tensors[prefix + "12.bias"] = input_hint_block_12_b;
 
-        tensors[prefix + "input_hint_block.14.weight"] = input_hint_block_14_w;
-        tensors[prefix + "input_hint_block.14.bias"] = input_hint_block_14_b;
-
-        // zero block
-        zero_block.map_by_name(tensors, prefix);
+        tensors[prefix + "14.weight"] = input_hint_block_14_w;
+        tensors[prefix + "14.bias"] = input_hint_block_14_b;
     }
 
     /**
@@ -1692,9 +1781,6 @@ struct InputHintBlock {
                                  h));
         h = ggml_silu_inplace(ctx, h);
 
-        // zero block
-        h = zero_block.forward(ctx, h);
-
         return h;
     }
 };
@@ -1708,7 +1794,7 @@ struct ControlNet {
     int out_channels = 4;
     int num_res_blocks = 2; // number of residual blocks per downsample
     int attention_resolutions[3] = {4, 2, 1};
-    int channel_mult[4] = {1, 2, 4, 8}; // channel multiplier for each level of the UNet
+    int channel_mult[4] = {1, 2, 4, 4}; // channel multiplier for each level of the UNet
     int time_embed_dim = 1280;
     int num_heads = 8;  // the number of attention heads in each attention layer
     int num_head_channels = -1;
@@ -1729,6 +1815,10 @@ struct ControlNet {
     DownSample input_down_samples[3];
 
     // input hint block
+    InputHintBlock input_hint_block;
+
+    // zero convs
+    ZeroConvs zero_convs;
 
     // middle_block
     ResBlock middle_block_0;
@@ -1762,6 +1852,13 @@ struct ControlNet {
                     input_transformers[i][j].d_head = ch / num_heads;
                 }
                 input_block_chans.push_back(ch);
+            }
+            if (i != len_mults - 1) {
+                input_down_samples[i].channels = ch;
+                input_down_samples[i].out_channels = ch;
+                input_block_chans.push_back(ch);
+
+                ds *= 2;
             }
         }
 
@@ -1809,6 +1906,10 @@ struct ControlNet {
         }
 
         // input hint block
+        mem_size += input_hint_block.compute_params_mem_size(wtype);
+
+        // zero convs
+        mem_size += zero_convs.compute_params_mem_size(wtype);
 
         // middle_block
         mem_size += middle_block_0.compute_params_mem_size(wtype);
@@ -1844,6 +1945,10 @@ struct ControlNet {
         }
 
         // input hint block
+        input_hint_block.init_params(ctx, wtype);
+
+        // zero convs
+        zero_convs.init_params(ctx, wtype);
 
         // middle_blocks
         middle_block_0.init_params(ctx, wtype);
@@ -1876,7 +1981,7 @@ struct ControlNet {
         for (int i = 0; i < len_mults; i++) {
             for (int j = 0; j < num_res_blocks; j++) {
                 input_block_idx += 1;
-
+                // std::cout << prefix + "input_blocks." + std::to_string(input_block_idx) + ".0." << std::endl;
                 input_res_blocks[i][j].map_by_name(tensors, prefix + "input_blocks." + std::to_string(input_block_idx) + ".0.");
                 if (ds == attention_resolutions[0] || ds == attention_resolutions[1] || ds == attention_resolutions[2]) {
                     input_transformers[i][j].map_by_name(tensors, prefix + "input_blocks." + std::to_string(input_block_idx) + ".1.");
@@ -1884,10 +1989,17 @@ struct ControlNet {
             }
             if (i != len_mults - 1) {
                 input_block_idx += 1;
+                // std::cout << prefix + "input_blocks." + std::to_string(input_block_idx) + ".0." << std::endl;
                 input_down_samples[i].map_by_name(tensors, prefix + "input_blocks." + std::to_string(input_block_idx) + ".0.");
                 ds *= 2;
             }
         }
+
+        // input hint block
+        input_hint_block.map_by_name(tensors, prefix + "input_hint_block.");
+
+        // zero convs
+        zero_convs.map_by_name(tensors, prefix + "zero_convs.");
 
         // middle_blocks
         middle_block_0.map_by_name(tensors, prefix + "middle_block.0.");
@@ -1960,6 +2072,8 @@ struct ControlNet {
         h = middle_block_0.forward(ctx, h, emb);      // [N, 4*model_channels, h/8, w/8]
         h = middle_block_1.forward(ctx, h, context);  // [N, 4*model_channels, h/8, w/8]
         h = middle_block_2.forward(ctx, h, emb);      // [N, 4*model_channels, h/8, w/8]
+
+        return h;
     }
 };
 
@@ -3278,6 +3392,10 @@ class StableDiffusionGGML {
             controlnet.map_by_name(tensors, "control_model.");
         }
 
+        // for (auto pair : tensors) {
+        //     std::cout << pair.first.c_str() << std::endl;
+        // }
+
         LOG_DEBUG("loading weights");
         std::set<std::string> tensor_names_in_file;
         int64_t t0 = ggml_time_ms();
@@ -4447,8 +4565,7 @@ std::vector<uint8_t> StableDiffusion::img2img(const std::vector<uint8_t>& init_i
  * @param width 
  * @param height 
  * @param sample_method 
- * @param sample_steps 
- * @param strength 
+ * @param sample_steps  
  * @param seed 
  * @return std::vector<uint8_t> 
  */
@@ -4460,7 +4577,6 @@ std::vector<uint8_t> StableDiffusion::txt2img_controlnet(const std::vector<uint8
                                               int height,
                                               SampleMethod sample_method,
                                               int sample_steps,
-                                              float strength,
                                               int seed) {
     std::vector<uint8_t> result;
     struct ggml_init_params params;
@@ -4506,7 +4622,6 @@ std::vector<uint8_t> StableDiffusion::txt2img_controlnet(const std::vector<uint8
     ggml_tensor_set_f32_randn(x_t);
 
     std::vector<float> sigmas = sd->denoiser.get_sigmas(sample_steps);
-
     LOG_INFO("start sampling");
     struct ggml_tensor* x_0 = sd->sample(ctx, x_t, c, uc, cfg_scale, sample_method, sigmas);
     int64_t t2 = ggml_time_ms();

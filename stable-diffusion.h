@@ -55,7 +55,6 @@ class StableDiffusion {
         int height,
         SampleMethod sample_method,
         int sample_steps,
-        float strength,
         int seed);
 };
 
